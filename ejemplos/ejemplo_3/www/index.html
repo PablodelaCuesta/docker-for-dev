@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Provincia de Cádiz</title>
+<script>
+var municipios = [];
+// Cargo las comarcas justo al cargarse la página
+window.onload = function(){
+	var x = new XMLHttpRequest();
+	x.onreadystatechange = function(){
+		if (x.readyState == 4 && x.status == 200){
+			var comarcas = JSON.parse(x.responseText);
+			CargaComarcas(comarcas);
+		}
+	}
+	x.open("GET","comarcas.php",true);
+	x.send();	
+}
+
+function CargaComarcas(comarcas){
+	var texto = "";
+	for (var i=0;i<comarcas.length;i++){
+		texto += "<option value='"+comarcas[i].id+"'>"+
+		         comarcas[i].nombre+"</option>";	
+	}
+	document.getElementById("comarca").innerHTML += texto;	
+}
+
+function CargaMunicipios(idComarca){
+	if (idComarca != 0){
+		var x = new XMLHttpRequest();
+		x.onreadystatechange = function(){
+			if (x.status == 200 && x.readyState == 4){
+				console.log(this.responseText);
+				console.log(JSON.parse(this.responseText));
+				municipios = JSON.parse(this.responseText);
+				var texto = "<option value='-1'>-- Elegir municipio --></option>";
+				for (var i=0;i<municipios.length;i++){
+					texto += "<option value='"+i+"'>"+municipios[i].nombre+"</option>";		
+				}
+				document.getElementById("municipio").innerHTML = texto;		
+			}
+		}
+		x.open("POST","municipios.php",true);
+		x.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+		x.send("comarca="+idComarca);
+	}
+}
+
+function PresentaDatos(i){
+	if (i > -1){
+		var salida = "<h2>"+municipios[i].nombre+"</h2>";
+		salida += "Población: "+ municipios[i].poblacion+" habitantes<br/>";
+	salida += "Superficie: "+ municipios[i].superficie+" Km<sup>2</sup><br/>";
+	var densidad = parseFloat(municipios[i].poblacion)/parseFloat(municipios[i].superficie);
+	salida += "Densidad de Población: "+ densidad.toFixed(2)+" habitantes/Km<sup>2</sup><br/>";
+	salida += "Altitud: "+ municipios[i].altitud+" metros sobre el nivel del mar<br/>";
+	salida += "Gentilicio: "+ municipios[i].gentilicio+"<br/>";
+	if (municipios[i].pedanias != null){
+		salida += "Pedanías: "+ municipios[i].pedanias+"<br/>";
+	}
+		document.getElementById("datos").innerHTML = salida;
+	}
+}
+
+</script>
+</head>
+
+<body>
+<h1>Provincia de Cádiz</h1>
+Comarca: <select id="comarca" onchange="CargaMunicipios(this.value)">
+<option value="0">-- Elegir comarca --</option>
+</select>
+Municipio: <select id="municipio" onchange="PresentaDatos(this.value)">
+</select>
+<div id="datos"></div>
+</body>
+</html>

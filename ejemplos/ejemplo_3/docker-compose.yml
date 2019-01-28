@@ -1,0 +1,29 @@
+version: '3'
+services:
+  db:
+    image: mysql:5.7
+    container_name: 'database'
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+        MYSQL_ROOT_PASSWORD: 1234
+        MYSQL_DATABASE: cadiz
+    volumes:
+        -  ./data:/var/lib/mysql
+    networks:
+        - lamp
+  server:
+    build: ./Docker
+    container_name: 'server'
+    restart: always
+    ports:
+        - "8080:80"
+    networks:
+        - lamp
+    volumes:
+        - ./www:/var/www/html
+networks:
+  lamp:
+    driver: bridge
+
