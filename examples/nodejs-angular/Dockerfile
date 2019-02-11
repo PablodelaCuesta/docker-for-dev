@@ -6,6 +6,3 @@ VOLUME /app
 WORKDIR /app
 
 EXPOSE 4200
-
-ENTRYPOINT ["ng"]
-
