@@ -1,0 +1,42 @@
+version: '3'
+services:
+  app:
+    build:
+      context: ./Docker/
+      dockerfile: app.dockerfile
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    environment: 
+      DB_PORT: 3306
+      DB_HOST: database
+    networks: 
+      -  lamp
+
+  web:
+    build:
+      context: ./Docker/
+      dockerfile: web.dockerfile
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www/
+    ports:
+      - "8080:80"
+    networks: 
+      - lamp
+
+  database:
+    image: mysql:5.7
+    volumes:
+      - dbdata:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: homestead
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: 1234
+      MYSQL_ROOT_PASSWORD: qaz123
+    ports:
+      - "33061:3306"
+volumes:
+  dbdata:
+networks: 
+  lamp:
