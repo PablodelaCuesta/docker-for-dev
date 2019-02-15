@@ -1,30 +1,38 @@
 version: '3.5'
 services:
-   db:
-     image: mysql:5.7
-     volumes:
-       - data:/var/lib/mysql
-     restart: always
-     networks: 
-       - lamp
-     environment:
-       MYSQL_ROOT_PASSWORD: testing
-       MYSQL_DATABASE: wordpress
-       MYSQL_USER: wordpress
-       MYSQL_PASSWORD: wordpress
+  db:
+    image: mysql:5.7
+    volumes:
+      - despliegue:/var/lib/mysql
+    restart: always
+    networks: 
+      -  lamp
+    environment:
+      MYSQL_ROOT_PASSWORD: testing
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
 
-   wordpress:
-     image: wordpress:latest
-     ports:
-       - "8000:80"
-     restart: always
-     environment:
-       WORDPRESS_DB_HOST: db:3306
-       WORDPRESS_DB_USER: wordpress
-       WORDPRESS_DB_PASSWORD: wordpress
-       WORDPRESS_DB_NAME: wordpress
+  wordpress:
+    image: wordpress:latest
+    ports:
+      - "8000:80"
+    restart: always
+    volumes: 
+      - wrdpress:/var/www/html
+    networks: 
+      -  lamp
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
 
 volumes:
-    data:
-      external:
-        name: db_data
+  despliegue:
+    external: true
+  wrdpress:
+    external: true
+networks: 
+  lamp:
+    external: true
