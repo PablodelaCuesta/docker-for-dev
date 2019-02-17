@@ -1,3 +1,6 @@
-Pkg.add("DataFrames.jl")
-Pkg.add("Distributions.jl")
-Pkg.add("Bootstrap.jl")
+using Pkg
+Pkg.add("DataFrames")
+Pkg.add("Distributions")
+Pkg.add("Bootstrap")
+Pkg.add("MLKernels")
+Pkg.add("Flux")
