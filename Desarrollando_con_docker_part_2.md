@@ -12,31 +12,29 @@ Como ya sabemos, los volúmenes nos permiten la persistencia de datos. A su vez,
 
 #### Sintaxis corta
 
-Optionally specify a path on the host machine (`HOST:CONTAINER`), or an access mode (`HOST:CONTAINER:ro`).
-
-You can mount a relative path on the host, that expands relative to the directory of the Compose configuration file being used. Relative paths should always begin with `.` or `...`
+Opcionalmente podemos especificar en el *PATH* el método de acceso a los datos. Así tenemos que por defecto escribimos (`HOST:CONTAINER`), si queremos especificar el método de acceso añadimos al final lo siguiente: (`HOST:CONTAINER:ro`). 
 
 ```{yml}
 volumes:
-  # Just specify a path and let the Engine create a volume
+  # Especificamos un path y dejamos que Docker cree un volumen
   - /var/lib/mysql
 
-  # Specify an absolute path mapping
+  # También podemos especifiar una ruta completa, tanto del host como del contenedor
   - /opt/data:/var/lib/mysql
 
-  # Path on the host, relative to the Compose file
+  # Ruta relativa al fichero que contiene el .yml, y absoluta dentro del contenedor
   - ./cache:/tmp/cache
 
   # User-relative path
   - ~/configs:/etc/configs/:ro
 
-  # Named volume
+  # Nombre del volumen de datos ya existente
   - datavolume:/var/lib/mysql
 ```
 
 #### Sintaxis larga
 
-The long form syntax allows the configuration of additional fields that can’t be expressed in the short form.
+La sintaxis larga consiste en añadir parámetros que nos permita un mayor control sobre los volúmenes que vamos a crear. A continuación dejo una lista de casi todos los parámetros que podemos añadir.
 
 * `type`: the mount type `volume`, `bind` or `tmpfs`
 * `source`: the source of the mount, a path on the host for a bind mount, or the name of a volume defined in the top-level volumes key. Not applicable for a tmpfs mount.
@@ -53,7 +51,7 @@ The long form syntax allows the configuration of additional fields that can’t 
 
 ## Redes
 
-Para comprobar la utilización de redes, vamos a crear una red y conectaremos tres contenedores distintos. Con ello veremos el funcionamiento.
+Para entender la utilización de redes, vamos a crear una red y conectaremos dos contenedores distintos dejando un tercero sin conexión. Con ello veremos claramente el funcionamiento.
 
 El siguiente comando nos permitirá crear una red del tipo *bridge* que servirá para hacer conjuntos de contenedores que pertenezcan a la misma *subred*. Estos contenedores tendrán asociado automáticamente un servicio **DNS**, con lo cual resultará mucho más sencillo la comunicación entre servicios o contenedores.
 
@@ -63,7 +61,7 @@ Creamos la red de la siguiente forma:
 docker network create probando
 ````
 
-Ahora creamos tres contenedores distintos que contenien **alpine**. A la vez vamos a especificar un parámetro nuevo, `--net`. Este parámetro nos permite conectar el contenedor que vamos a lanzar con una red específica.
+Ahora creamos tres contenedores distintos que con **alpine**. A la vez vamos a especificar un parámetro nuevo, `--net`. Este parámetro nos permite conectar el contenedor que vamos a lanzar con una red específica.
 
 ```{bash}
 docker run --name prueba1 -dit --net probando alpine sh
@@ -107,8 +105,25 @@ Podemos ver la gestión que ha realizado docker mediante el siguiente comando:
 docker network inspect prueba
 ```
 
-# Foto de las distintas redes
-![]()
+Output:
+```
+"Containers": {
+            "32ab091ffad77a1a38f066cf9d2d296d0fec9494a809b52d8c6e9ac7e719c722": {
+                "Name": "prueba1",
+                "EndpointID": "e8144c1780eb224f455d9d70d441736edf2cee0d49ab7b3e64fb10b235e8e264",
+                "MacAddress": "02:42:ac:12:00:02",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            },
+            "836e197d05df1ce553c1f6c7d3cd6eb12815831f20c9518514ee8169d0db68d7": {
+                "Name": "prueba2",
+                "EndpointID": "51ca050e689fcee216525afa05c0912687bf803dd12585783703f41b6a3bdd88",
+                "MacAddress": "02:42:ac:12:00:03",
+                "IPv4Address": "172.18.0.3/16",
+                "IPv6Address": ""
+            }
+        }
+```
 
 Una vez tenemos ya configurado nuestro entorno podemos pasar a comprobar la teoría.
 Repasamos las ideas generales:
@@ -130,5 +145,32 @@ Una vez entramos hacemos `ping`:
 ```{bash}
 ping prueba2
 ```
-# Foto con resultados
-![]()
+
+Output:
+```
+PING prueba2 (172.18.0.3): 56 data bytes
+64 bytes from 172.18.0.3: seq=0 ttl=64 time=0.089 ms
+64 bytes from 172.18.0.3: seq=1 ttl=64 time=0.102 ms
+64 bytes from 172.18.0.3: seq=2 ttl=64 time=0.102 ms
+```
+
+Sin embargo, si realizamos `ping` al tercer contenedor que no estaba en la misma red, obtenemos lo siguiente:
+
+Output:
+```
+/ # ping prueba2
+ping: bad address 'prueba2'
+/ # ping prueba1
+ping: bad address 'prueba1'
+```
+
+Hemos comprabado que efectivamente los contenedores están aislados a menos que indiquemos lo contrario.
+
+Pero estos parámetros sirven para la comunicación entre contenedores, si queremos que exista comunicación entre algún contenedor y la máquina *Host* de la misma manera o con el mismo método, deberemos de usar la red ya existente del tipo **host**. Si no existe, podemos crearla, pero solo nos dejará tener una sola red de este tipo.
+
+Para crearla hacemos lo siguiente
+```{bash}
+docker network create mynet -d host
+```
+
+Si ya la tenemos creada, que es lo normal, simplemente tenemos que especificar dicha red al lanzar el contenedor, o como es nuestro caso en el cual ya tenemos 3 contenedores funcionando, podemos conectar el tercer contenedor a dicha red **host** ejecutando lo siguiente:
